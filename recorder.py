@@ -1,5 +1,4 @@
 from pynput import mouse, keyboard
-import threading
 import time
 
 class MouseRecorder:
@@ -8,8 +7,6 @@ class MouseRecorder:
         self._mouse_listener = None
         self._keyboard_listener = None
         self._start_time = None
-        self._listener_thread = None
-        self._stop_event = threading.Event()
 
     def _on_click(self, x, y, button, pressed):
         if button.name == 'left' and pressed:
@@ -21,23 +18,17 @@ class MouseRecorder:
         if key == keyboard.Key.esc:
             print("Escape pressed. Stopping recording.")
             self.stop()
+            # Stop the keyboard listener as well
             return False
-
-    def _run_listeners(self):
-        self._mouse_listener = mouse.Listener(on_click=self._on_click)
-        self._keyboard_listener = keyboard.Listener(on_press=self._on_key)
-        self._mouse_listener.start()
-        self._keyboard_listener.start()
-        self._mouse_listener.join()
-        self._keyboard_listener.join()
 
     def start(self):
         self.recording = []
         self._start_time = time.time()
-        self._stop_event.clear()
-        self._listener_thread = threading.Thread(target=self._run_listeners, daemon=True)
-        self._listener_thread.start()
-        print("Recording started... (Press ESC to stop)")
+        self._mouse_listener = mouse.Listener(on_click=self._on_click)
+        self._keyboard_listener = keyboard.Listener(on_press=self._on_key)
+        self._mouse_listener.start()
+        self._keyboard_listener.start()
+        print("Recording started...")
 
     def stop(self):
         if self._mouse_listener:
